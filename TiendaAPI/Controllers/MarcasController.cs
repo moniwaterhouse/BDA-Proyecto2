@@ -12,11 +12,11 @@ namespace TiendaAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class Neo4jController : ControllerBase
+    public class MarcasController : Controller
     {
         private readonly IDriver _driver;
 
-        public Neo4jController()
+        public MarcasController()
         {
             _driver = GraphDatabase.Driver("bolt://localhost:7687", AuthTokens.Basic("neo4j", "1234"));
         }
