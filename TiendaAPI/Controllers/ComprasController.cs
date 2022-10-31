@@ -22,18 +22,13 @@ namespace TiendaAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateNode(string name)
+        public async Task<IActionResult> LoadPurchasesCSV(string csvFilePath)
         {
             var statementText = new StringBuilder();
-            statementText.Append("CREATE (person:Person {name: $name})");
-            var statementParameters = new Dictionary<string, object>
-        {
-            {"name", name }
-        };
-
+            statementText.Append("LOAD CSV WITH HEADERS FROM 'file:///" + csvFilePath + "' AS row\nWITH row WHERE row.idProducto IS NOT NULL\nMERGE (c:Compras {idCliente: row.idCliente, idProducto : row.idProducto, cantidad : row.cantidad})");
             var session = this._driver.AsyncSession();
-            var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString(), statementParameters));
-            return StatusCode(201, "Node has been created in the database");
+            var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
+            return StatusCode(201, "El grafo de compras ha sido creado exitosamente");
         }
     }
 }
