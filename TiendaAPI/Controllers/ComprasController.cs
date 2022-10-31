@@ -16,7 +16,7 @@ namespace TiendaAPI.Controllers
     {
         private readonly IDriver _driver;
 
-        public ClientesController()
+        public ComprasController()
         {
             _driver = GraphDatabase.Driver("bolt://localhost:7687", AuthTokens.Basic("neo4j", "1234"));
         }
