@@ -21,16 +21,16 @@ namespace TiendaAPI.Controllers
             _driver = GraphDatabase.Driver("bolt://localhost:7687", AuthTokens.Basic("neo4j", "1234"));
         }
 
-        [HttpPost]
+        [HttpPost("loadCSV")]
         public async Task<IActionResult> LoadBrandsCSV(string csvFilePath)
         {
             var statementText = new StringBuilder();
-            statementText.Append("LOAD CSV WITH HEADERS FROM 'file:///" + csvFilePath + "' AS row\nWITH row WHERE row.id IS NOT NULL\nMERGE (m:Marcas {id: row.id, nombre : row.nombre, pais : row.pais})");
+            statementText.Append("LOAD CSV WITH HEADERS FROM 'file:///" + csvFilePath + "' AS row\nWITH row WHERE row.id IS NOT NULL\nMERGE (m:Marcas {id: toInteger(row.id), nombre : row.nombre, pais : row.pais})");
             var session = this._driver.AsyncSession();
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
             return StatusCode(201, "El grafo de marcas ha sido creado exitosamente");
         }
-   
+
     }
 }
 

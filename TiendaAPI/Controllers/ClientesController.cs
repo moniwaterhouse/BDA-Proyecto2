@@ -21,11 +21,11 @@ namespace TiendaAPI.Controllers
             _driver = GraphDatabase.Driver("bolt://localhost:7687", AuthTokens.Basic("neo4j", "1234"));
         }
 
-        [HttpPost]
+        [HttpPost("loadCSV")]
         public async Task<IActionResult> LoadClientsCSV(string csvFilePath)
         {
             var statementText = new StringBuilder();
-            statementText.Append("LOAD CSV WITH HEADERS FROM 'file:///" + csvFilePath + "' AS row\nWITH row WHERE row.id IS NOT NULL\nMERGE (c:Cliente {id: row.id, first_name: row.first_name, last_name: row.last_name})");
+            statementText.Append("LOAD CSV WITH HEADERS FROM 'file:///" + csvFilePath + "' AS row\nWITH row WHERE row.id IS NOT NULL\nMERGE (c:Clientes {id: toInteger(row.id), first_name: row.first_name, last_name: row.last_name})");
             var session = this._driver.AsyncSession();
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
             return StatusCode(201, "El grafo de clientes fue creado correctamente");

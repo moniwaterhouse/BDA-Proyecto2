@@ -21,11 +21,11 @@ namespace TiendaAPI.Controllers
             _driver = GraphDatabase.Driver("bolt://localhost:7687", AuthTokens.Basic("neo4j", "1234"));
         }
 
-        [HttpPost]
+        [HttpPost("loadCSV")]
         public async Task<IActionResult> LoadProductsCSV(string csvFilePath)
         {
             var statementText = new StringBuilder();
-            statementText.Append("LOAD CSV WITH HEADERS FROM 'file:///" + csvFilePath + "' AS row\nWITH row WHERE row.id IS NOT NULL\nMERGE (p:Productos {id: row.id, nombre : row.nombre, marca : row.marca, precio : row.precio})");
+            statementText.Append("LOAD CSV WITH HEADERS FROM 'file:///" + csvFilePath + "' AS row\nWITH row WHERE row.id IS NOT NULL\nMERGE (p:Productos {id: toInteger(row.id), nombre : row.nombre, marca : row.marca, precio : toInteger(row.precio)})");
             var session = this._driver.AsyncSession();
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
             return StatusCode(201, "El grafo de productos ha sido creado exitosamente");
