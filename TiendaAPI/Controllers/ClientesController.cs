@@ -143,6 +143,37 @@ namespace TiendaAPI.Controllers
             return Ok(marcas);
         }
 
+        [HttpGet("getClientProducts")]
+        public async Task<IActionResult> GetClientProducts(int id)
+        {
+
+
+            IResultCursor cursor;
+            var resultados = new List<IRecord>();
+            var statementText = new StringBuilder();
+            var session = this._driver.AsyncSession();
+            var marcas = new List<TopProducto>();
+            try
+            {
+                cursor = await session.RunAsync(@"match (cliente:Clientes{id:"+id+"})-[r:realizo]-(compra:Compras)-[r2:contiene]-(producto:Productos) return producto.nombre as nombre, compra.cantidad as unidades");
+                resultados = await cursor.ToListAsync(record =>
+                    record.As<IRecord>());
+
+            }
+            finally
+            {
+                await session.CloseAsync();
+            }
+
+            foreach (var result in resultados)
+            {
+                var props = JsonConvert.SerializeObject(result.As<IRecord>().Values);
+                marcas.Add(JsonConvert.DeserializeObject<TopProducto>(props));
+
+            }
+            return Ok(marcas);
+        }
+
 
 
 

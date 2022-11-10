@@ -116,8 +116,8 @@ namespace TiendaAPI.Controllers
             try
             {
                 cursor = await session.RunAsync(@"match (compra:Compras)-[r:contiene]-(producto:Productos)
-                                                  return producto.nombre as nombre, sum(compra.cantidad) as unidadesVendidas
-                                                  order by unidadesVendidas desc limit 5");
+                                                  return producto.nombre as nombre, sum(compra.cantidad) as unidades
+                                                  order by unidades desc limit 5");
                 resultados = await cursor.ToListAsync(record =>
                     record.As<IRecord>());
 
