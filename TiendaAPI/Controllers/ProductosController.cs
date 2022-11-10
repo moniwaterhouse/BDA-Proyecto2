@@ -40,6 +40,16 @@ namespace TiendaAPI.Controllers
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
             return StatusCode(201, "Se creo correctamente la relacion producto-elaborado_por->marca");
         }
+
+        [HttpPost("createProduct")]
+        public async Task<IActionResult> CreateProduct(int idMarca, int idProducto, string nombreProducto, string nombreMarca, int precio)
+        {
+            var statementText = new StringBuilder();
+            statementText.Append("MATCH(m: Marcas {id: " + idMarca + "})\nCREATE (p:Productos {id : " + idProducto + ", nombre : '" + nombreProducto + "', marca : '" + nombreMarca + "', precio : " + precio + "})\nCREATE (p)-[r:elaborado_por]->(m)");
+            var session = this._driver.AsyncSession();
+            var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
+            return StatusCode(201, "Se creo el nuevo producto correctamente");
+        }
     }
 }
 
