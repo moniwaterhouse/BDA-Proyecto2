@@ -38,7 +38,7 @@ namespace TiendaAPI.Controllers
             statementText.Append("MATCH (c:Productos)\nUNWIND c.id as productosIds\nMATCH (p:Compras {idProducto:productosIds})\nCREATE (p)-[r:contiene]->(c)");
             var session = this._driver.AsyncSession();
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
-            return StatusCode(201, "Se ha creado correctamente la relación compra-contiene -> producto");
+            return StatusCode(201);
         }
 
         [HttpPost("registrarCompra")]
@@ -48,7 +48,7 @@ namespace TiendaAPI.Controllers
             statementText.Append("MATCH(cliente:Clientes {id : "+idCliente+"})\nMATCH(producto:Productos {id : "+idProducto+"})\nCREATE (compra:Compras {idCliente : "+idCliente+", idProducto : "+idProducto+", cantidad : "+cantidad+"})\nCREATE (cliente)-[r:realizo]->(compra)\nCREATE (compra)-[r2: contiene]->(producto)");
             var session = this._driver.AsyncSession();
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
-            return StatusCode(201, "ha registrado correctamente la compra");
+            return StatusCode(201);
         }
     }
 }

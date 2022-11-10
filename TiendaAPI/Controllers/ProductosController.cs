@@ -28,7 +28,7 @@ namespace TiendaAPI.Controllers
             statementText.Append("LOAD CSV WITH HEADERS FROM 'file:///" + csvFilePath + "' AS row\nWITH row WHERE row.id IS NOT NULL\nMERGE (p:Productos {id: toInteger(row.id), nombre : row.nombre, marca : row.marca, precio : toInteger(row.precio)})");
             var session = this._driver.AsyncSession();
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
-            return StatusCode(201, "El grafo de productos ha sido creado exitosamente");
+            return StatusCode(201);
         }
 
         [HttpPost("initProductsRelations")]
@@ -38,7 +38,7 @@ namespace TiendaAPI.Controllers
             statementText.Append("MATCH (p:Productos)\nUNWIND p.marca as nombreMarcas\nMATCH (m:Marcas {nombre:nombreMarcas})\nCREATE (p)-[r:elaborado_por]->(m)");
             var session = this._driver.AsyncSession();
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
-            return StatusCode(201, "Se creo correctamente la relacion producto-elaborado_por->marca");
+            return StatusCode(201);
         }
 
         [HttpPost("createProduct")]
@@ -48,7 +48,7 @@ namespace TiendaAPI.Controllers
             statementText.Append("MATCH(m: Marcas {id: " + idMarca + "})\nCREATE (p:Productos {id : " + idProducto + ", nombre : '" + nombreProducto + "', marca : '" + nombreMarca + "', precio : " + precio + "})\nCREATE (p)-[r:elaborado_por]->(m)");
             var session = this._driver.AsyncSession();
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
-            return StatusCode(201, "Se creo el nuevo producto correctamente");
+            return StatusCode(201);
         }
 
         [HttpPut("modifyProduct")]
@@ -58,7 +58,7 @@ namespace TiendaAPI.Controllers
             statementText.Append("MATCH(p:Productos {id: "+idProducto+"})-[r:elaborado_por]-()\nMATCH(m:Marcas {id: "+idMarca+"})\nset p = {id : "+idProducto+", nombre : '"+nombreProducto+"', marca : '"+nombreMarca+"', precio : "+precio+"}\nCREATE (p)-[r2:elaborado_por]->(m)\nDELETE r");
             var session = this._driver.AsyncSession();
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
-            return StatusCode(201, "Se modificó el producto correctamente");
+            return StatusCode(201);
         }
 
         [HttpDelete("deleteProduct")]
@@ -68,7 +68,7 @@ namespace TiendaAPI.Controllers
             statementText.Append("MATCH (p:Productos {id:"+idProducto+"})-[r:elaborado_por]-()\nOPTIONAL MATCH (m:Compras {idProducto:"+idProducto+"})-[r2:contiene]-()\nOPTIONAL MATCH ()-[r3:realizo]-(m)\nDELETE r2, r, p, m, r3");
             var session = this._driver.AsyncSession();
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
-            return StatusCode(201, "Se eliminó el producto correctamente");
+            return StatusCode(201);
         }
     }
 }

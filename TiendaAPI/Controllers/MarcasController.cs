@@ -28,7 +28,7 @@ namespace TiendaAPI.Controllers
             statementText.Append("LOAD CSV WITH HEADERS FROM 'file:///" + csvFilePath + "' AS row\nWITH row WHERE row.id IS NOT NULL\nMERGE (m:Marcas {id: toInteger(row.id), nombre : row.nombre, pais : row.pais})");
             var session = this._driver.AsyncSession();
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
-            return StatusCode(201, "El grafo de marcas ha sido creado exitosamente");
+            return StatusCode(201);
         }
 
     }
