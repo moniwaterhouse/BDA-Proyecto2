@@ -30,6 +30,16 @@ namespace TiendaAPI.Controllers
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
             return StatusCode(201, "El grafo de compras ha sido creado exitosamente");
         }
+
+        [HttpPost("initComprasRelations")]
+        public async Task<IActionResult> InitComprasRelations()
+        {
+            var statementText = new StringBuilder();
+            statementText.Append("MATCH (c:Productos)\nUNWIND c.id as productosIds\nMATCH (p:Compras {idProducto:productosIds})\nCREATE (p)-[r:contiene]->(c)");
+            var session = this._driver.AsyncSession();
+            var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
+            return StatusCode(201, "Se ha creado correctamente la relación compra-contiene -> producto");
+        }
     }
 }
 
