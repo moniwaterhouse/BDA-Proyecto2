@@ -40,6 +40,16 @@ namespace TiendaAPI.Controllers
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
             return StatusCode(201, "Se ha creado correctamente la relacion cliente-realizo->compra");
         }
+
+        [HttpPost("crearCliente")]
+        public async Task<IActionResult> CrearCliente(int id, string firstName, string lastName)
+        {
+            var statementText = new StringBuilder();
+            statementText.Append("CREATE (c:Clientes {id :" + id + ", first_name : '" +firstName +"', last_name : '" +lastName+"'})");
+            var session = this._driver.AsyncSession();
+            var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
+            return StatusCode(201, "Se ga agregado correctamente el nuevo cliente");
+        }
     }
 
 
