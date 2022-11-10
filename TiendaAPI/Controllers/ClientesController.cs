@@ -61,6 +61,16 @@ namespace TiendaAPI.Controllers
             return StatusCode(201, "Se ha borrado correctamente el cliente");
         }
 
+        [HttpPut("modificarCliente")]
+        public async Task<IActionResult> ModificarCliente(int id, string firstName, string lastName)
+        {
+            var statementText = new StringBuilder();
+            statementText.Append("match (c:Clientes {id : "+id+"})\nset c = {id:"+id+", first_name : '"+firstName+"', last_name:'"+lastName+"'}");
+            var session = this._driver.AsyncSession();
+            var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
+            return StatusCode(201, "Se ha modificado el cliente correctamente");
+        }
+
 
     }
 
