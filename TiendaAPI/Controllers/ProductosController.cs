@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Neo4j.Driver;
 using System.Text;
+using Newtonsoft.Json;
+using TiendaAPI.Models;
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -69,6 +71,36 @@ namespace TiendaAPI.Controllers
             var session = this._driver.AsyncSession();
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
             return StatusCode(201);
+        }
+
+        [HttpGet("getAllProducts")]
+        public async Task<IActionResult> GetAllProducts()
+        {
+
+
+            IResultCursor cursor;
+            var resultados = new List<INode>();
+            var statementText = new StringBuilder();
+            var session = this._driver.AsyncSession();
+            var productos = new List<Producto>();
+            try
+            {
+                cursor = await session.RunAsync(@"MATCH (p:Productos) RETURN p");
+                resultados = await cursor.ToListAsync(record =>
+                    record[0].As<INode>());
+
+            }
+            finally
+            {
+                await session.CloseAsync();
+            }
+
+            foreach (var result in resultados)
+            {
+                var nodeProps = JsonConvert.SerializeObject(result.As<INode>().Properties);
+                productos.Add(JsonConvert.DeserializeObject<Producto>(nodeProps));
+            }
+            return Ok(productos);
         }
     }
 }
