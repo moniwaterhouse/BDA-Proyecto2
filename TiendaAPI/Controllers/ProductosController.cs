@@ -60,6 +60,16 @@ namespace TiendaAPI.Controllers
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
             return StatusCode(201, "Se modificó el producto correctamente");
         }
+
+        [HttpDelete("deleteProduct")]
+        public async Task<IActionResult> DeleteProduct(int idProducto)
+        {
+            var statementText = new StringBuilder();
+            statementText.Append("MATCH (p:Productos {id:"+idProducto+"})-[r:elaborado_por]-()\nOPTIONAL MATCH (m:Compras {idProducto:"+idProducto+"})-[r2:contiene]-()\nOPTIONAL MATCH ()-[r3:realizo]-(m)\nDELETE r2, r, p, m, r3");
+            var session = this._driver.AsyncSession();
+            var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
+            return StatusCode(201, "Se eliminó el producto correctamente");
+        }
     }
 }
 
