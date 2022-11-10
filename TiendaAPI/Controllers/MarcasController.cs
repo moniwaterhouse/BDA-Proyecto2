@@ -66,6 +66,39 @@ namespace TiendaAPI.Controllers
             return Ok(marcas);
         }
 
+        [HttpGet("getMarcasMasVendidas")]
+        public async Task<IActionResult> GetMarcasMasVendidas()
+        {
+
+
+            IResultCursor cursor;
+            var resultados = new List<IRecord>();
+            var statementText = new StringBuilder();
+            var session = this._driver.AsyncSession();
+            var marcas = new List<TopMarca>();
+            try
+            {
+                cursor = await session.RunAsync(@"match (compra:Compras)-[r:contiene]-(producto:Productos)-[r2:elaborado_por]-(marca:Marcas)
+                                                  return marca.nombre as nombre, marca.pais as pais, sum(compra.cantidad) as unidadesVendidas
+                                                  order by unidadesVendidas desc limit 5");
+                resultados = await cursor.ToListAsync(record =>
+                    record.As<IRecord>());
+
+            }
+            finally
+            {
+                await session.CloseAsync();
+            }
+
+            foreach (var result in resultados)
+            {
+                var props = JsonConvert.SerializeObject(result.As<IRecord>().Values);
+                marcas.Add(JsonConvert.DeserializeObject<TopMarca>(props));
+
+            }
+            return Ok(marcas);
+        }
+
     }
 
    

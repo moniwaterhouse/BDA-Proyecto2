@@ -112,7 +112,7 @@ namespace TiendaAPI.Controllers
             var resultados = new List<IRecord>();
             var statementText = new StringBuilder();
             var session = this._driver.AsyncSession();
-            var productos = new List<ProductoCantidad>();
+            var productos = new List<TopProducto>();
             try
             {
                 cursor = await session.RunAsync(@"match (compra:Compras)-[r:contiene]-(producto:Productos)
@@ -130,7 +130,7 @@ namespace TiendaAPI.Controllers
             foreach (var result in resultados)
             {
                 var props = JsonConvert.SerializeObject(result.As<IRecord>().Values);
-                productos.Add(JsonConvert.DeserializeObject<ProductoCantidad>(props));
+                productos.Add(JsonConvert.DeserializeObject<TopProducto>(props));
 
             }
             return Ok(productos);
