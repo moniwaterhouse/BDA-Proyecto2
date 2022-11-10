@@ -12,6 +12,7 @@ using System.Text.Json;
 using System.IO;
 using System.Numerics;
 using Newtonsoft.Json;
+using TiendaAPI.Models;
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -109,10 +110,43 @@ namespace TiendaAPI.Controllers
             return Ok(clientes);
         }
 
+        [HttpGet("getTopClientes")]
+        public async Task<IActionResult> GetTopClientes()
+        {
 
 
+            IResultCursor cursor;
+            var resultados = new List<IRecord>();
+            var statementText = new StringBuilder();
+            var session = this._driver.AsyncSession();
+            var marcas = new List<TopCliente>();
+            try
+            {
+                cursor = await session.RunAsync(@"match (cliente:Clientes)-[r:realizo]-(compra:Compras)
+                                                  return cliente.first_name as nombre, cliente.last_name as apellido, sum(compra.cantidad) as cantidadProductos
+                                                  order by cantidadProductos desc limit 5");
+                resultados = await cursor.ToListAsync(record =>
+                    record.As<IRecord>());
 
+            }
+            finally
+            {
+                await session.CloseAsync();
+            }
+
+            foreach (var result in resultados)
+            {
+                var props = JsonConvert.SerializeObject(result.As<IRecord>().Values);
+                marcas.Add(JsonConvert.DeserializeObject<TopCliente>(props));
+
+            }
+            return Ok(marcas);
         }
+
+
+
+
+    }
 
 
     }
