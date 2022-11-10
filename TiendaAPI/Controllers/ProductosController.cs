@@ -50,6 +50,16 @@ namespace TiendaAPI.Controllers
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
             return StatusCode(201, "Se creo el nuevo producto correctamente");
         }
+
+        [HttpPut("modifyProduct")]
+        public async Task<IActionResult> ModifyProduct(int idMarca, int idProducto, string nombreProducto, string nombreMarca, int precio)
+        {
+            var statementText = new StringBuilder();
+            statementText.Append("MATCH(p:Productos {id: "+idProducto+"})-[r:elaborado_por]-()\nMATCH(m:Marcas {id: "+idMarca+"})\nset p = {id : "+idProducto+", nombre : '"+nombreProducto+"', marca : '"+nombreMarca+"', precio : "+precio+"}\nCREATE (p)-[r2:elaborado_por]->(m)\nDELETE r");
+            var session = this._driver.AsyncSession();
+            var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
+            return StatusCode(201, "Se modificó el producto correctamente");
+        }
     }
 }
 
