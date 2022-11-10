@@ -5,6 +5,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Neo4j.Driver;
 using System.Text;
+using HR.Models;
+using System.Xml.Linq;
+using Microsoft.AspNetCore.Http;
+using System.Text.Json;
+using System.IO;
+using System.Numerics;
+using Newtonsoft.Json;
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -14,11 +21,12 @@ namespace TiendaAPI.Controllers
     [ApiController]
     public class ClientesController : Controller
     {
-        private readonly IDriver _driver;
+        private readonly IDriver _driver; 
 
         public ClientesController()
         {
             _driver = GraphDatabase.Driver("bolt://localhost:7687", AuthTokens.Basic("neo4j", "1234"));
+
         }
 
         [HttpPost("loadCSV")]
@@ -28,7 +36,7 @@ namespace TiendaAPI.Controllers
             statementText.Append("LOAD CSV WITH HEADERS FROM 'file:///" + csvFilePath + "' AS row\nWITH row WHERE row.id IS NOT NULL\nMERGE (c:Clientes {id: toInteger(row.id), first_name: row.first_name, last_name: row.last_name})");
             var session = this._driver.AsyncSession();
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
-            return StatusCode(201, "El grafo de clientes fue creado correctamente");
+            return StatusCode(201);
         }
 
         [HttpPost("initClientRelations")]
@@ -38,7 +46,7 @@ namespace TiendaAPI.Controllers
             statementText.Append("MATCH (c:Clientes)\nUNWIND c.id as clienteIds\nMATCH (p:Compras {idCliente:clienteIds})\nCREATE (c)-[r:realizo]->(p)");
             var session = this._driver.AsyncSession();
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
-            return StatusCode(201, "Se ha creado correctamente la relacion cliente-realizo->compra");
+            return StatusCode(201);
         }
 
         [HttpPost("crearCliente")]
@@ -48,7 +56,7 @@ namespace TiendaAPI.Controllers
             statementText.Append("CREATE (c:Clientes {id :" + id + ", first_name : '" +firstName +"', last_name : '" +lastName+"'})");
             var session = this._driver.AsyncSession();
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
-            return StatusCode(201, "Se ha agregado correctamente el nuevo cliente");
+            return StatusCode(201);
         }
 
         [HttpDelete("eliminarCliente")]
@@ -58,7 +66,7 @@ namespace TiendaAPI.Controllers
             statementText.Append("match(c:Clientes {id:"+id+"})\noptional MATCH (c)-[r:realizo]-()\noptional MATCH (p:Compras {idCliente:"+id+"})\noptional MATCH (p)-[r2:contiene]-()\ndelete c, r, p, r2");
             var session = this._driver.AsyncSession();
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
-            return StatusCode(201, "Se ha borrado correctamente el cliente");
+            return StatusCode(201);
         }
 
         [HttpPut("modificarCliente")]
@@ -68,12 +76,44 @@ namespace TiendaAPI.Controllers
             statementText.Append("match (c:Clientes {id : "+id+"})\nset c = {id:"+id+", first_name : '"+firstName+"', last_name:'"+lastName+"'}");
             var session = this._driver.AsyncSession();
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
-            return StatusCode(201, "Se ha modificado el cliente correctamente");
+            return StatusCode(201);
+        }
+
+        [HttpGet("getAllClients")]
+        public async Task<IActionResult> GetAllClients()
+        {
+
+
+            IResultCursor cursor;
+            var resultados = new List<INode>();
+            var statementText = new StringBuilder();
+            var session = this._driver.AsyncSession();
+            var clientes = new List<Cliente>();
+            try
+            {
+                cursor = await session.RunAsync(@"MATCH (c:Clientes) RETURN c");
+                resultados= await cursor.ToListAsync(record =>
+                    record[0].As<INode>());
+
+            }
+            finally
+            {
+                await session.CloseAsync();
+            }
+
+            foreach (var result in resultados)
+            {
+                var nodeProps = JsonConvert.SerializeObject(result.As<INode>().Properties);
+                clientes.Add(JsonConvert.DeserializeObject<Cliente>(nodeProps));
+            }
+            return Ok(clientes);
+        }
+
+
+
+
         }
 
 
     }
-
-
-}
 
