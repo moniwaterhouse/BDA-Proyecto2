@@ -174,6 +174,37 @@ namespace TiendaAPI.Controllers
             return Ok(marcas);
         }
 
+        [HttpGet("getSimilarClients")]
+        public async Task<IActionResult> GetSimilarClients(int idCliente)
+        {
+
+
+            IResultCursor cursor;
+            var resultados = new List<IRecord>();
+            var statementText = new StringBuilder();
+            var session = this._driver.AsyncSession();
+            var marcas = new List<ClienteProducto>();
+            try
+            {
+                cursor = await session.RunAsync(@"match (cliente:Clientes{id:"+idCliente+"})-[r1:realizo]-(compra:Compras)-[r2:contiene]-(producto:Productos) match (otrosClientes:Clientes)-[r3:realizo]-(compra2:Compras)-[r4:contiene]-(productoIgual:Productos) WHERE productoIgual.id = producto.id AND otrosClientes.id <> "+idCliente+" return DISTINCT  otrosClientes.id as id, otrosClientes.first_name as nombre, otrosClientes.last_name as apellido,  productoIgual.nombre as nombreProducto");
+                resultados = await cursor.ToListAsync(record =>
+                    record.As<IRecord>());
+
+            }
+            finally
+            {
+                await session.CloseAsync();
+            }
+
+            foreach (var result in resultados)
+            {
+                var props = JsonConvert.SerializeObject(result.As<IRecord>().Values);
+                marcas.Add(JsonConvert.DeserializeObject<ClienteProducto>(props));
+
+            }
+            return Ok(marcas);
+        }
+
 
 
 
