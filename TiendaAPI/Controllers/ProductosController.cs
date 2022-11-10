@@ -112,12 +112,12 @@ namespace TiendaAPI.Controllers
             var resultados = new List<IRecord>();
             var statementText = new StringBuilder();
             var session = this._driver.AsyncSession();
-            var productos = new List<ProductoCantidad>();
+            var productos = new List<TopProducto>();
             try
             {
                 cursor = await session.RunAsync(@"match (compra:Compras)-[r:contiene]-(producto:Productos)
-                                                  return producto.nombre as nombre, sum(compra.cantidad) as unidadesVendidas
-                                                  order by unidadesVendidas desc limit 5");
+                                                  return producto.nombre as nombre, sum(compra.cantidad) as unidades
+                                                  order by unidades desc limit 5");
                 resultados = await cursor.ToListAsync(record =>
                     record.As<IRecord>());
 
@@ -130,7 +130,7 @@ namespace TiendaAPI.Controllers
             foreach (var result in resultados)
             {
                 var props = JsonConvert.SerializeObject(result.As<IRecord>().Values);
-                productos.Add(JsonConvert.DeserializeObject<ProductoCantidad>(props));
+                productos.Add(JsonConvert.DeserializeObject<TopProducto>(props));
 
             }
             return Ok(productos);
