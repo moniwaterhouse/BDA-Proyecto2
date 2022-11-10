@@ -40,6 +40,38 @@ namespace TiendaAPI.Controllers
             var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
             return StatusCode(201, "Se ha creado correctamente la relacion cliente-realizo->compra");
         }
+
+        [HttpPost("crearCliente")]
+        public async Task<IActionResult> CrearCliente(int id, string firstName, string lastName)
+        {
+            var statementText = new StringBuilder();
+            statementText.Append("CREATE (c:Clientes {id :" + id + ", first_name : '" +firstName +"', last_name : '" +lastName+"'})");
+            var session = this._driver.AsyncSession();
+            var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
+            return StatusCode(201, "Se ha agregado correctamente el nuevo cliente");
+        }
+
+        [HttpDelete("eliminarCliente")]
+        public async Task<IActionResult> EliminarCliente(int id)
+        {
+            var statementText = new StringBuilder();
+            statementText.Append("match(c:Clientes {id:"+id+"})\noptional MATCH (c)-[r:realizo]-()\noptional MATCH (p:Compras {idCliente:"+id+"})\noptional MATCH (p)-[r2:contiene]-()\ndelete c, r, p, r2");
+            var session = this._driver.AsyncSession();
+            var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
+            return StatusCode(201, "Se ha borrado correctamente el cliente");
+        }
+
+        [HttpPut("modificarCliente")]
+        public async Task<IActionResult> ModificarCliente(int id, string firstName, string lastName)
+        {
+            var statementText = new StringBuilder();
+            statementText.Append("match (c:Clientes {id : "+id+"})\nset c = {id:"+id+", first_name : '"+firstName+"', last_name:'"+lastName+"'}");
+            var session = this._driver.AsyncSession();
+            var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
+            return StatusCode(201, "Se ha modificado el cliente correctamente");
+        }
+
+
     }
 
 
