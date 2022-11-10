@@ -16,24 +16,29 @@ namespace TiendaAPI.Controllers
     {
         private readonly IDriver _driver;
 
-        public ClientesController()
+        public ComprasController()
         {
             _driver = GraphDatabase.Driver("bolt://localhost:7687", AuthTokens.Basic("neo4j", "1234"));
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateNode(string name)
+        [HttpPost("loadCSV")]
+        public async Task<IActionResult> LoadPurchasesCSV(string csvFilePath)
         {
             var statementText = new StringBuilder();
-            statementText.Append("CREATE (person:Person {name: $name})");
-            var statementParameters = new Dictionary<string, object>
-        {
-            {"name", name }
-        };
-
+            statementText.Append("LOAD CSV WITH HEADERS FROM 'file:///" + csvFilePath + "' AS row\nWITH row WHERE row.idProducto IS NOT NULL\nMERGE (c:Compras {idCliente: toInteger(row.idCliente), idProducto : toInteger(row.idProducto), cantidad : toInteger(row.cantidad)})");
             var session = this._driver.AsyncSession();
-            var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString(), statementParameters));
-            return StatusCode(201, "Node has been created in the database");
+            var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
+            return StatusCode(201, "El grafo de compras ha sido creado exitosamente");
+        }
+
+        [HttpPost("initComprasRelations")]
+        public async Task<IActionResult> InitComprasRelations()
+        {
+            var statementText = new StringBuilder();
+            statementText.Append("MATCH (c:Productos)\nUNWIND c.id as productosIds\nMATCH (p:Compras {idProducto:productosIds})\nCREATE (p)-[r:contiene]->(c)");
+            var session = this._driver.AsyncSession();
+            var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
+            return StatusCode(201, "Se ha creado correctamente la relación compra-contiene -> producto");
         }
     }
 }

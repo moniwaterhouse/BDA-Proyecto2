@@ -21,20 +21,27 @@ namespace TiendaAPI.Controllers
             _driver = GraphDatabase.Driver("bolt://localhost:7687", AuthTokens.Basic("neo4j", "1234"));
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateNode(string name)
+        [HttpPost("loadCSV")]
+        public async Task<IActionResult> LoadClientsCSV(string csvFilePath)
         {
             var statementText = new StringBuilder();
-            statementText.Append("CREATE (person:Person {name: $name})");
-            var statementParameters = new Dictionary<string, object>
-        {
-            {"name", name }
-        };
-
+            statementText.Append("LOAD CSV WITH HEADERS FROM 'file:///" + csvFilePath + "' AS row\nWITH row WHERE row.id IS NOT NULL\nMERGE (c:Clientes {id: toInteger(row.id), first_name: row.first_name, last_name: row.last_name})");
             var session = this._driver.AsyncSession();
-            var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString(), statementParameters));
-            return StatusCode(201, "Node has been created in the database");
+            var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
+            return StatusCode(201, "El grafo de clientes fue creado correctamente");
+        }
+
+        [HttpPost("initClientRelations")]
+        public async Task<IActionResult> InitClientRelations()
+        {
+            var statementText = new StringBuilder();
+            statementText.Append("MATCH (c:Clientes)\nUNWIND c.id as clienteIds\nMATCH (p:Compras {idCliente:clienteIds})\nCREATE (c)-[r:realizo]->(p)");
+            var session = this._driver.AsyncSession();
+            var result = await session.WriteTransactionAsync(tx => tx.RunAsync(statementText.ToString()));
+            return StatusCode(201, "Se ha creado correctamente la relacion cliente-realizo->compra");
         }
     }
+
+
 }
 
